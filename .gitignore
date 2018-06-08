@@ -1,0 +1,4 @@
+*.o
+*.so
+mallocfail_hashes.txt
+mf_test
