@@ -106,7 +106,7 @@ Environment Variables
 You can control the behaviour of mallocfail with some environment variables.
 
 `MALLOCFAIL_FILE` determines the file that hashes will be written to. Defaults
-to `mallocfail_hashes.txt` in the current directory.
+to `/tmp/mallocfail_hashes` if not set.
 
 `MALLOCFAIL_DEBUG` - set to 1 to enable debugging information. This has the
 effect of printing to stdout the stack traces of any allocations that are
