@@ -34,4 +34,5 @@ clean :
 
 install : mallocfail.so
 	$(INSTALL) mallocfail.so ${DESTDIR}${prefix}/lib/mallocfail.so
+	$(INSTALL) mallocfail ${DESTDIR}${prefix}/bin/mallocfail
 
