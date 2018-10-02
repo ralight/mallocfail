@@ -42,8 +42,13 @@ the libc versions.
 Simple Usage
 ------------
 
-To use mallocfail with your executable you need to set the `LD_PRELOAD`
-environment variable.
+The easiest way to use mallocfail is with the provded `mallocfail` wrapper
+script:
+
+    mallocfail <your executable>
+
+If you want more control, then to use mallocfail with your executable you need
+to set the `LD_PRELOAD` environment variable.
 
     LD_PRELOAD=/usr/local/lib/mallocfail.so <your executable>
 
@@ -106,7 +111,7 @@ Environment Variables
 You can control the behaviour of mallocfail with some environment variables.
 
 `MALLOCFAIL_FILE` determines the file that hashes will be written to. Defaults
-to `/tmp/mallocfail_hashes` if not set.
+to `mallocfail_hashes` if not set.
 
 `MALLOCFAIL_DEBUG` - set to 1 to enable debugging information. This has the
 effect of printing to stdout the stack traces of any allocations that are
