@@ -49,7 +49,7 @@ static struct traces_s *traces = NULL;
 static struct backtrace_state *state = NULL;
 static char strbuf[1024];
 static char *hashfile = NULL;
-static char hashfile_default[] = "/tmp/mallocfail_hashes";
+static char hashfile_default[] = "mallocfail_hashes";
 static int debug = -1;
 static int backtrace_count;
 
