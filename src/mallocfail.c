@@ -52,6 +52,8 @@ static char *hashfile = NULL;
 static char hashfile_default[] = "mallocfail_hashes";
 static int debug = -1;
 static int backtrace_count;
+static int fail_count = 0;
+static int max_fail_count = -1;
 
 
 static void hex_encode(const unsigned char *in, unsigned int in_len, char *encoded)
@@ -188,6 +190,22 @@ int should_malloc_fail(void)
 	char hash_str[1024];
 	int exists;
 
+	if(max_fail_count == -1){
+		char *env = getenv("MALLOCFAIL_FAIL_COUNT");
+		if(env){
+			max_fail_count = atoi(env);
+			if(max_fail_count < 0){
+				max_fail_count = 0;
+			}
+		}else{
+			max_fail_count = 0;
+		}
+	}
+
+	if(max_fail_count > 0 && fail_count >= max_fail_count){
+		return 0;
+	}
+
 	if(!state){
 		state = backtrace_create_state(NULL, 1, NULL, NULL);
 	}
@@ -214,6 +232,11 @@ int should_malloc_fail(void)
 	if(!exists && debug){
 		print_backtrace();
 	}
-	return !exists;
+	if(exists){
+		return 0;
+	}else{
+		fail_count++;
+		return 1;
+	}
 }
 

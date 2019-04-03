@@ -119,6 +119,9 @@ forced to fail. Enabling this option means the stack trace is generated twice
 per failed memory allocation, which may have a small effect on performance -
 worth noting if this is critical to you.
 
+`MALLOCFAIL_FAIL_COUNT` - set to an integer > 0 to limit the number of failures
+that can occur in a run. Setting to 1 will ensure that only a single failure
+will happen per run.
 
 Performance Impact
 ------------------
