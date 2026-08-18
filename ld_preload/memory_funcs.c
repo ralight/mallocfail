@@ -1,6 +1,6 @@
 #define _GNU_SOURCE
 
-#include "mallocfail.h"
+#include "mallocfail_preload.h"
 #include <stdio.h>
 #include <dlfcn.h>
 #include <stdlib.h>

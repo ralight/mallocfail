@@ -45,23 +45,23 @@ Simple Usage
 The easiest way to use mallocfail is with the provded `mallocfail` wrapper
 script:
 
-    mallocfail <your executable>
+    mallocfail_preload <your executable>
 
 If you want more control, then to use mallocfail with your executable you need
 to set the `LD_PRELOAD` environment variable.
 
-    LD_PRELOAD=/usr/local/lib/mallocfail.so <your executable>
+    LD_PRELOAD=/usr/local/lib/mallocfail_preload.so <your executable>
 
 Note that the location of mallocfail.so may be different on your system,
 substitute the path in that you have instead. If you have compiled yourself and
 are still in the mallocfail directory, then use
 
-    LD_PRELOAD=./mallocfail.so <your executable>
+    LD_PRELOAD=./mallocfail_preload.so <your executable>
 
 It is not recommended to set `LD_PRELOAD` by using `export` before running your
 executable, because any subsequent command will be affected.
 
-    export LD_PRELOAD=/usr/local/lib/mallocfail.so
+    export LD_PRELOAD=/usr/local/lib/mallocfail_preload.so
     my_executable_test
     ssh myhost # this will certainly fail
 
@@ -74,7 +74,7 @@ lines from the hashes file and repeat your program. It may be helpful to set
 the `MALLOCFAIL_DEBUG` environment variable to give you more information on
 what is happening.
 
-    LD_PRELOAD=/usr/local/lib/mallocfail.so MALLOCFAIL_DEBUG=1 <your executable>
+    LD_PRELOAD=/usr/local/lib/mallocfail_preload.so MALLOCFAIL_DEBUG=1 <your executable>
 
 Using the debug option in this manner rather than setting it outright means you
 are not bombarded with information on failures that are handled correctly. See
@@ -95,7 +95,7 @@ or
 
 Then configure `LD_PRELOAD` in the gdb command window:
 
-     set environment LD_PRELOAD /usr/local/lib/mallocfail.so
+     set environment LD_PRELOAD /usr/local/lib/mallocfail_preload.so
 
 Then run your program
 

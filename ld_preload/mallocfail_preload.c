@@ -21,15 +21,15 @@ efficient and reliable than e.g. random testing.
 #include "uthash.h"
 #include "sha3.h"
 
-#include <stdio.h>
-#include <string.h>
+#include <backtrace.h>
 #include <execinfo.h>
-
+#include <stdio.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
 #include <unistd.h>
-#include <backtrace.h>
+
+#include <mallocfail_preload.h>
 
 #define HASH_BITS 256
 #define HASH_BYTES ((HASH_BITS)/8)
