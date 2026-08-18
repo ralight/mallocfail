@@ -1,0 +1,3 @@
+#!/bin/sh
+
+LD_PRELOAD=@CMAKE_INSTALL_PREFIX@/lib/mallocfailpreload.so $*

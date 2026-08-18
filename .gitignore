@@ -1,3 +1,5 @@
+build/
+
 *.o
 *.so
 mallocfail_hashes.txt
