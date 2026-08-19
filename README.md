@@ -5,7 +5,24 @@ This is a project that contains various ways to introduce memory allocation
 into your C programs, with the aim of ensuring that no failed allocation can
 cause a problem.
 
-malloffailpreload - ld_preload
+mallocfailwrap - wrap
+---------------------
+
+This is a static library that replaces memory allocation functions by using the
+linker function wrapping capability.
+
+It fails an allocation randomly with a 1 in N chance, using its own pseudo
+random number generator. The seed for the PRNG can be randomly generated at
+start, set by an environment variable, or by using an initialisation function
+which hases some input data.
+
+The hashed input data method is suitable for use with fuzzers, with the fuzzer
+generated input data. This has the effect that the allocation failures are
+deterministic based on the fuzzer input and so will not confuse the fuzzer.
+
+For more details see the [README](wrap/README.md)
+
+mallocffailpreload - ld_preload
 ------------------------------
 
 This is a shared library that replaces memory allocation functions by using

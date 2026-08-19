@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef MALLOCFAILWRAP
+#include <mallocfail/wrap.h>
+#endif
 
 void c2(char *argv)
 {
@@ -22,6 +25,9 @@ void c1(char *argv)
 
 int main(int argc, char *argv[])
 {
+#ifdef MALLOCFAILWRAP
+	mallocfailwrap_init(NULL, 0);
+#endif
 	printf("call 1a: %p\n", malloc(10));
 	printf("call 1b: %p\n", realloc(NULL, 10));
 	printf("call 1c: %p\n", strdup(argv[0]));

@@ -22,6 +22,9 @@ set_target_properties(preload PROPERTIES
 	PREFIX ""
 )
 
+add_executable(mf_test_preload ../mf_test.c)
+target_link_libraries(mf_test_preload preload)
+
 install(
 	TARGETS preload
 	EXPORT mallocfailTargets

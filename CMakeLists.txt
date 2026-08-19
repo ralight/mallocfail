@@ -11,11 +11,10 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 include(CMakePackageConfigHelpers)
+list(APPEND CMAKE_MODULE_PATH "${mallocfail_SOURCE_DIR}/cmake/")
 
 add_subdirectory(ld_preload)
-
-add_executable(mf_test mf_test.c)
-target_link_libraries(mf_test preload)
+add_subdirectory(wrap)
 
 install(
 	EXPORT mallocfailTargets
