@@ -32,6 +32,13 @@ chance of failure.
 allocations that MFW will always allow, meaning some setup allocations can be
 made safe. Defaults to 0.
 
+`MALLOCFAIL_DEBUG` is an integer that controls the debug output. Set to 0, the
+default, to give no output at all. Increasing the value gives more debug
+output. Current output levels produce:
+
+1. Information on configuration and state on initialisation.
+2. Message when an allocation is failed.
+
 
 Wrapped Functions
 -----------------

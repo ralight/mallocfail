@@ -1,7 +1,9 @@
 #include <errno.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <sys/random.h>
 #include <unistd.h>
 
@@ -23,9 +25,28 @@ static bool should_malloc_fail(void);
 static void first_run(void);
 
 static uint64_t rnd_state;
+static long debug = 0;
 static long fail_chance = -1;
 static long ignore_initial_count = 0;
 static bool initialised = false;
+
+
+/* --------------------------------------------------
+ * Output
+ * -------------------------------------------------- */
+
+void debug_printf(int level, const char *fmt, ...)
+{
+	if(level > debug){
+		return;
+	}
+
+	va_list va;
+
+	va_start(va, fmt);
+	vfprintf(stderr, fmt, va);
+	va_end(va);
+}
 
 
 /* --------------------------------------------------
@@ -146,6 +167,10 @@ static bool should_malloc_fail(void)
 
 	bool fail = (splitmix64() % fail_chance) == 0;
 
+	if(fail){
+		debug_printf(2, "mallocfail: Failing allocation\n");
+		// FIXME - include stack trace
+	}
 	return fail;
 }
 
@@ -160,10 +185,16 @@ static void first_run(void)
 	if(initialised){
 		return;
 	}
+	debug = env_to_long("MALLOCFAIL_DEBUG", 0);
 	fail_chance = env_to_long("MALLOCFAIL_FAIL_CHANCE", 1000);
 	ignore_initial_count = env_to_long("MALLOCFAIL_IGNORE_INITIAL", 0);
 	splitmix64_seed();
 	initialised = true;
+
+	debug_printf(1, "mallocfail: debug=%ld\n", debug);
+	debug_printf(1, "mallocfail: fail chance=1:%ld\n", fail_chance);
+	debug_printf(1, "mallocfail: ignore initial=%ld\n", ignore_initial_count);
+	debug_printf(1, "mallocfail: seed=%llu\n", rnd_state);
 }
 
 
