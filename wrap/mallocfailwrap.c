@@ -20,10 +20,12 @@ char *__wrap_strdup(const char *);
 static inline uint64_t hash_fnv1a(const void *data, size_t size);
 static inline uint64_t splitmix64(void);
 static bool should_malloc_fail(void);
+static void first_run(void);
 
 static uint64_t rnd_state;
 static long fail_chance = -1;
 static long ignore_initial_count = 0;
+static bool initialised = false;
 
 
 /* --------------------------------------------------
@@ -59,6 +61,16 @@ static inline uint64_t hash_fnv1a(const void *data, size_t size)
 		hash = hash * 1099511628211ULL;
 	}
 	return hash;
+}
+
+
+static void splitmix64_seed(void)
+{
+	long env_seed = env_to_long("MALLOCFAIL_RNG_SEED", 0);
+
+	if(env_seed == 0){
+		getentropy(&rnd_state, sizeof(rnd_state));
+	}
 }
 
 
@@ -120,6 +132,9 @@ char *__wrap_strdup(const char *str)
  * -------------------------------------------------- */
 static bool should_malloc_fail(void)
 {
+	if(!initialised){
+		first_run();
+	}
 	if(fail_chance < 0){
 		return false;
 	}
@@ -138,14 +153,25 @@ static bool should_malloc_fail(void)
 /* --------------------------------------------------
  * Init
  * -------------------------------------------------- */
-void mallocfailwrap_init(const void *data, size_t size)
+
+
+static void first_run(void)
 {
+	if(initialised){
+		return;
+	}
 	fail_chance = env_to_long("MALLOCFAIL_FAIL_CHANCE", 1000);
 	ignore_initial_count = env_to_long("MALLOCFAIL_IGNORE_INITIAL", 0);
+	splitmix64_seed();
+	initialised = true;
+}
+
+
+void mallocfailwrap_init(const void *data, size_t size)
+{
+	first_run();
 
 	if(size > 0 && data){
 		rnd_state = hash_fnv1a(data, size);
-	}else{
-		getentropy(&rnd_state, sizeof(rnd_state));
 	}
 }
