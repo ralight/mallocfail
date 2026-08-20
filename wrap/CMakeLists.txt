@@ -20,6 +20,9 @@ target_link_options(wrap INTERFACE
 	"LINKER:--wrap=realloc"
 	"LINKER:--wrap=strdup"
 )
+target_link_libraries(wrap INTERFACE
+	backtrace
+)
 
 target_include_directories(wrap PUBLIC
 	$<BUILD_INTERFACE:${mallocfail_SOURCE_DIR}/include>

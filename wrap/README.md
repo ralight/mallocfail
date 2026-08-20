@@ -19,8 +19,8 @@ Simple Usage
 ------------
 
 
-Environment Variables
----------------------
+Environment Variables - Operation
+---------------------------------
 
 You can control the behaviour of mallocfailwrap with some environment variables.
 
@@ -37,7 +37,44 @@ default, to give no output at all. Increasing the value gives more debug
 output. Current output levels produce:
 
 1. Information on configuration and state on initialisation.
-2. Message when an allocation is failed.
+2. Callstack of when an allocation is failed.
+
+
+`MALLOCFAIL_RNG_SEED` is an integer value that is used as the seed for the
+internal random number generator. This allows runs to be repeated with the same
+seed to get the same failure pattern.
+
+
+Environment Variables - Tuning
+------------------------------
+
+These variables allow various internal parameters to be tuned.
+
+`MALLOCFAIL_CALLSTACK_MAX_DEPTH` is an integer that sets the maximum callstack
+depth that is allowed. Defaults to 200. Any functions beyond this depth will
+not be recorded and printed if `MALLOCFAIL_DEBUG` is set to 2 or greater. Note
+that this value affects the memory pre-allocated for storing callstack frames.
+The total memory usage is roughly `MALLOCFAIL_CALLSTACK_MAX_DEPTH *
+(MALLOCFAIL_FILENAME_LEN + MALLOCFAIL_FUNCTION_LEN + sizeof(uintptr_t) +
+sizeof(int))` bytes.
+
+`MALLOCFAIL_CALLSTACK_MIN_DEPTH` is an integer that sets the minimum callstack
+depth where functions should start being printed when `MALLOCFAIL_DEBUG` is set
+to 2 or greater. This allows functions below main such as
+`__libc_start_call_main` to be removed from the callstack output. It is
+entirely acceptable to set this value so that `main` or application functions
+are suppressed. Defaults to 0.
+
+`MALLOCFAIL_FILENAME_LEN` is an integer that sets the maximum number of bytes
+that can be in a filename reported in a callstack. Defaults to 200. Characters
+beyond this limit will be truncated. Set to a higher value if your path
+requires it, at the expense of an increase in the pre-allocated memory needed.
+
+`MALLOCFAIL_FUNCTION_LEN` is an integer that sets the maximum number of bytes
+that can be in a function name reported in a callstack. Defaults to 100.
+Characters beyond this limit will be truncated. Set to a higher value if your
+function names require it, at the expense of an increase in the pre-allocated
+memory needed.
 
 
 Wrapped Functions
