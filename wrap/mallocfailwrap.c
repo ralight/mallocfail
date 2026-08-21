@@ -240,13 +240,13 @@ static void print_backtrace(void)
 	if(debug < 2){
 		return;
 	}
-	debug_printf(2, "------- Start trace -------\n");
+	debug_printf(2, "\n------- mallocfail: Failing allocation %llu -------\n", allocation_count);
 	for(int i=0; i<backtrace_count-callstack_min_depth; i++){
 		struct frame *f = &callstack[i];
 
 		debug_printf(2, "#%d %p in %s at %s:%d\n", i, f->pc, f->function, f->filename, f->lineno);
 	}
-	debug_printf(2, "------- End trace -------\n");
+	debug_printf(2, "---------------------------------------------------\n");
 	force_allow = false;
 }
 
@@ -361,7 +361,6 @@ static bool should_malloc_fail(void)
 	}
 
 	if(fail){
-		debug_printf(2, "\nmallocfail: Failing allocation %llu\n", allocation_count);
 		print_backtrace();
 	}
 	return fail;
