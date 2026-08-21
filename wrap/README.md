@@ -24,6 +24,11 @@ Environment Variables - Operation
 
 You can control the behaviour of mallocfailwrap with some environment variables.
 
+`MALLOCFAIL_ALLOWLIST` is a string that is the path to a file containing a list
+of functions, one per line, that if detected in the callstack should have
+allocations always succeed. For example, applications using openssl will
+definitely want all allocations in `OPENSSL_init_ssl` to succeed.
+
 `MALLOCFAIL_FAIL_CHANCE` is an integer that sets the chance that a given
 allocation will fail. The default is 1000 which means that there is a 1 in 1000
 chance of failure.
@@ -38,7 +43,6 @@ output. Current output levels produce:
 
 1. Information on configuration and state on initialisation.
 2. Callstack of when an allocation is failed.
-
 
 `MALLOCFAIL_RNG_SEED` is an integer value that is used as the seed for the
 internal random number generator. This allows runs to be repeated with the same

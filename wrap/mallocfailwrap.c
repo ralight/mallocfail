@@ -1,3 +1,5 @@
+#define uthash_malloc __real_malloc
+
 #include <backtrace.h>
 #include <errno.h>
 #include <limits.h>
@@ -8,6 +10,7 @@
 #include <stdio.h>
 #include <sys/random.h>
 #include <unistd.h>
+#include <uthash.h>
 
 #include "mallocfail/wrap.h"
 
@@ -16,6 +19,11 @@ struct frame{
 	char *function;
 	uintptr_t pc;
 	int lineno;
+};
+
+struct function_allowlist{
+	UT_hash_handle hh;
+	char function[1];
 };
 
 extern void *__real_malloc(size_t);
@@ -34,6 +42,7 @@ static bool should_malloc_fail(void);
 static void first_run(void);
 
 static uint64_t rnd_state;
+static uint64_t allocation_count = 0;
 static int backtrace_count = 0;
 static struct backtrace_state *bt_state = NULL;
 static struct frame *callstack = NULL;
@@ -44,6 +53,7 @@ static long fail_chance = -1;
 static bool force_allow = false;
 static long filename_len = 200;
 static long function_len = 100;
+static struct function_allowlist *allowlist = NULL;
 
 static long ignore_initial_count = 0;
 static bool initialised = false;
@@ -216,14 +226,20 @@ static int backtrace_collect_callback(void *data, uintptr_t pc, const char *file
 }
 
 
+static void collect_backtrace(void)
+{
+	force_allow = true;
+	backtrace_count = 0;
+	backtrace_full(bt_state, 0, backtrace_collect_callback, NULL, NULL);
+	force_allow = false;
+}
+
+
 static void print_backtrace(void)
 {
 	if(debug < 2){
 		return;
 	}
-	force_allow = true;
-	backtrace_count = 0;
-	backtrace_full(bt_state, 0, backtrace_collect_callback, NULL, NULL);
 	debug_printf(2, "------- Start trace -------\n");
 	for(int i=0; i<backtrace_count-callstack_min_depth; i++){
 		struct frame *f = &callstack[i];
@@ -236,6 +252,89 @@ static void print_backtrace(void)
 
 
 /* --------------------------------------------------
+ * Allow list
+ * -------------------------------------------------- */
+static int allowlist_add(const char *function)
+{
+	struct function_allowlist *item = NULL;
+	size_t len = strlen(function);
+	item = __real_calloc(1, sizeof(struct function_allowlist) + len + 1);
+	if(!item){
+		return 1;
+	}
+	strncpy(item->function, function, len+1);
+	HASH_ADD_KEYPTR(hh, allowlist, item->function, len, item);
+	return 0;
+}
+
+
+static bool allowlist_check(void)
+{
+	struct function_allowlist *item = NULL;
+	for(int i=backtrace_count-1; i>=0; i--){
+		HASH_FIND(hh, allowlist, callstack[i].function, strlen(callstack[i].function), item);
+		if(item){
+			return false;
+		}
+	}
+	return true;
+}
+
+
+static void allowlist_cleanup(void)
+{
+	struct function_allowlist *item, *tmp;
+	HASH_ITER(hh, allowlist, item, tmp){
+		HASH_DELETE(hh, allowlist, item);
+		free(item);
+	}
+}
+
+
+static void allowlist_print(void)
+{
+	struct function_allowlist *item, *tmp;
+	if(allowlist){
+		debug_printf(1, "Function allow list:\n");
+		HASH_ITER(hh, allowlist, item, tmp){
+			debug_printf(1, "- %s\n", item->function);
+		}
+	}
+}
+
+
+static int allowlist_init(const char *function_file)
+{
+	atexit(allowlist_cleanup);
+
+	char *func = __real_calloc(function_len+1, sizeof(char));
+	if(!func){
+		fprintf(stderr, "mallocfail: Out of memory in init, exiting.\n");
+		exit(1);
+	}
+	FILE *fptr = fopen(function_file, "rt");
+	if(!fptr){
+		free(func);
+		return 0;
+	}
+
+	while(fgets(func, function_len+1, fptr)){
+		size_t pos = strlen(func)-1;
+		while(pos >= 0 &&
+				(func[pos] == '\n' || func[pos] == '\r' || func[pos] == ' ')){
+			func[pos] = '\0';
+			pos--;
+		}
+		if(func[0] == '+'){
+			allowlist_add(&func[1]);
+		}
+	}
+	free(func);
+
+	return 0;
+}
+
+/* --------------------------------------------------
  * Core function - should the allocation fail?
  * -------------------------------------------------- */
 static bool should_malloc_fail(void)
@@ -246,6 +345,8 @@ static bool should_malloc_fail(void)
 	if(fail_chance < 0 || force_allow == true){
 		return false;
 	}
+	allocation_count++;
+
 	static int alloc_count = 0;
 	if(alloc_count < ignore_initial_count){
 		alloc_count++;
@@ -255,7 +356,12 @@ static bool should_malloc_fail(void)
 	bool fail = (splitmix64() % fail_chance) == 0;
 
 	if(fail){
-		debug_printf(2, "mallocfail: Failing allocation\n");
+		collect_backtrace();
+		fail = allowlist_check();
+	}
+
+	if(fail){
+		debug_printf(2, "\nmallocfail: Failing allocation %llu\n", allocation_count);
 		print_backtrace();
 	}
 	return fail;
@@ -287,8 +393,10 @@ static void first_run(void)
 	}
 	splitmix64_seed();
 	backtrace_init();
+	allowlist_init(getenv("MALLOCFAIL_ALLOWLIST"));
 	initialised = true;
 
+	debug_printf(1, "mallocfail: allow list=%s\n", getenv("MALLOCFAIL_ALLOWLIST"));
 	debug_printf(1, "mallocfail: debug=%ld\n", debug);
 	debug_printf(1, "mallocfail: fail chance=1:%ld\n", fail_chance);
 	debug_printf(1, "mallocfail: filename length=%ld\n", filename_len);
@@ -297,6 +405,7 @@ static void first_run(void)
 	debug_printf(1, "mallocfail: callstack max depth=%ld\n", callstack_max_depth);
 	debug_printf(1, "mallocfail: callstack min depth=%ld\n", callstack_min_depth);
 	debug_printf(1, "mallocfail: seed=%llu\n", rnd_state);
+	allowlist_print();
 }
 
 
