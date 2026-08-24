@@ -44,9 +44,14 @@ output. Current output levels produce:
 1. Information on configuration and state on initialisation.
 2. Callstack of when an allocation is failed.
 
-`MALLOCFAIL_RNG_SEED` is an integer value that is used as the seed for the
-internal random number generator. This allows runs to be repeated with the same
-seed to get the same failure pattern.
+`MALLOCFAIL_REQUIRE_INIT` can be 0 or 1. If 1, then MFW will only be activated
+once `mallocfailwrap_init()` has been called. This is very useful. If set to 0,
+allocations may start failing immediately. Currently defaults to 1.
+
+`MALLOCFAIL_RNG_SEED` can be a positive integer value that is used as the seed
+for the internal random number generator. This allows runs to be repeated with
+the same seed to get the same failure pattern. Alternatively, it is the integer
+value 0 which causes MFW to choose its own random seed.
 
 
 Environment Variables - Tuning

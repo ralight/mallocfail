@@ -39,7 +39,7 @@ char *__wrap_strdup(const char *);
 static inline uint64_t hash_fnv1a(const void *data, size_t size);
 static inline uint64_t splitmix64(void);
 static bool should_malloc_fail(void);
-static void first_run(void);
+static void first_run(bool require_init);
 
 static uint64_t rnd_state;
 static uint64_t allocation_count = 0;
@@ -340,7 +340,10 @@ static int allowlist_init(const char *function_file)
 static bool should_malloc_fail(void)
 {
 	if(!initialised){
-		first_run();
+		first_run(false);
+		if(!initialised){
+			return false;
+		}
 	}
 	if(fail_chance < 0 || force_allow == true){
 		return false;
@@ -372,10 +375,16 @@ static bool should_malloc_fail(void)
  * -------------------------------------------------- */
 
 
-static void first_run(void)
+static void first_run(bool from_init)
 {
 	if(initialised){
 		return;
+	}
+	if(!from_init){
+		long require_init = env_to_long("MALLOCFAIL_REQUIRE_INIT", 1);
+		if(require_init){
+			return;
+		}
 	}
 	debug = env_to_long("MALLOCFAIL_DEBUG", 0);
 	fail_chance = env_to_long("MALLOCFAIL_FAIL_CHANCE", 1000);
@@ -410,7 +419,7 @@ static void first_run(void)
 
 void mallocfailwrap_init(const void *data, size_t size)
 {
-	first_run();
+	first_run(true);
 
 	if(size > 0 && data){
 		rnd_state = hash_fnv1a(data, size);
