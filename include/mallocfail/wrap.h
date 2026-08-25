@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <stddef.h>
+
 void mallocfailwrap_init(const void *data, size_t size);
 
 #ifdef __cplusplus
